@@ -1,0 +1,91 @@
+# UI/UX Best Practices
+
+## Visual Hierarchy
+- Larger = more important
+- Font sizes: 12-14px body, 16-20px headings, 24-32px titles
+- Weight: 400 regular, 500 medium, 600-700 headings
+- Spacing: 4px, 8px, 16px, 24px, 32px, 48px (multiples of 4)
+- Colors: 3 max per screen (primary, secondary, accent)
+
+## Interaction
+- Buttons: min 44x44px touch target
+- Hover states: color/bg change, not just cursor
+- Active states: scale(0.98) or darker shade
+- Disabled: opacity-50, cursor-not-allowed
+- Loading: spinner + "Loading..." text
+- Feedback: toast/alert on actions (success/error)
+
+## Forms
+- Labels above inputs
+- Placeholder ≠ label (use both)
+- Show password toggle
+- Inline validation (after blur)
+- Error messages: red, below field, specific
+- Auto-focus first field
+- Enter submits form
+
+## Accessibility
+- Contrast: 4.5:1 text, 3:1 UI elements
+- Focus visible (ring-2 ring-blue-500)
+- aria-label on icon buttons
+- alt text on images
+- Semantic HTML: button not div
+- Keyboard: Tab, Enter, Escape work
+- Skip to main content link
+
+## Responsive
+- Mobile-first design
+- Breakpoints: sm:640 md:768 lg:1024 xl:1280
+- Touch targets: 44px minimum
+- Avoid hover-only interactions
+- Test on real devices
+
+## Performance UX
+- Skeleton screens for loading (not spinners alone)
+- Optimistic UI updates
+- Images: lazy load, blur placeholder
+- Instant feedback (<100ms)
+- Page load: <3s perceived
+
+## Layout
+- Max width: 1280px centered
+- Content width: 600-800px for reading
+- White space: generous (not cramped)
+- Consistent padding: 16px mobile, 24px desktop
+- Grid: 12 columns or flexbox
+
+## Typography
+- Line height: 1.5 body, 1.2 headings
+- Line length: 50-75 characters
+- Font stack: system fonts or 1-2 web fonts max
+- Readable contrast (no light gray on white)
+
+## Navigation
+- Logo links to home
+- Max 5-7 top nav items
+- Active page highlighted
+- Breadcrumbs for deep pages
+- Sticky header or back-to-top
+
+## CTAs (Call to Action)
+- Primary action: bold, contrasting color
+- One primary CTA per screen
+- Action words: "Get Started", "Download", not "Submit"
+- Position: top-right or bottom-center
+
+## Feedback & Errors
+- Success: green checkmark + message
+- Error: red X + specific fix ("Email required")
+- Warning: yellow alert
+- Info: blue icon
+- Auto-dismiss non-critical (3-5s)
+
+## Avoid
+- Tiny text (<12px)
+- Low contrast (<4.5:1)
+- Hidden navigation (hamburger on desktop)
+- Auto-playing videos
+- Pop-ups on entry
+- Infinite scroll without pagination option
+- Centering everything
+- ALL CAPS body text

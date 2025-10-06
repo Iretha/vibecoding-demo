@@ -1,0 +1,45 @@
+# Laravel API Best Practices
+
+## Request Flow
+Route → FormRequest validation → Controller → Service → Model → Response
+
+## Controllers (Thin)
+public function store(StoreRequest $request): JsonResponse
+{
+    $item = $this->service->create($request->validated());
+    return response()->json($item, 201);
+}
+
+## Services (Business Logic)
+public function create(array $data): Model
+{
+    return DB::transaction(fn() => Model::create($data));
+}
+
+## Models
+protected $fillable = ['name', 'email'];
+protected $casts = ['is_active' => 'boolean', 'data' => 'array'];
+public function items(): HasMany { return $this->hasMany(Item::class); }
+
+## Validation (FormRequest)
+public function rules(): array {
+    return ['email' => 'required|email|unique:users'];
+}
+
+## Queries
+Model::with('relation')->where('status', 'active')->paginate(20);
+
+## Responses
+Success: response()->json($data, 200)
+Created: response()->json($data, 201)
+Error: response()->json(['error' => 'message'], 400)
+
+## Must Use
+- Eager loading: ->with()
+- Transactions: DB::transaction()
+- Type hints everywhere
+- API Resources for output
+- Rate limiting
+
+## Avoid
+N+1 queries | Fat controllers | $guarded=[] | Raw SQL | Logic in migrations
