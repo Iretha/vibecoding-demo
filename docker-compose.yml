@@ -1,6 +1,6 @@
 # Docker Compose Configuration for vibecode-full-stack-starter-kit
 # Tech Stack: Laravel Backend + Next.js Frontend
-# Assigned ports: 8200-8205
+# Assigned ports: 8200-8206
 # 
 # Usage:
 #   docker compose up -d
@@ -132,6 +132,30 @@ services:
       - ./backend:/var/www/html:ro
       - ./frontend:/app:ro
     command: tail -f /dev/null  # Keep container running
+    restart: unless-stopped
+    networks:
+      - vibecode-full-stack-starter-kit_network
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "1025:1025"   # SMTP port (for your app to send mail)
+      - "8025:8025"   # Web UI (open in browser)
+    networks:
+      - vibecode-full-stack-starter-kit_network
+
+  # Swagger UI for API Documentation
+  swagger-ui:
+    image: swaggerapi/swagger-ui:latest
+    container_name: swagger-ui
+    ports:
+      - "8206:8080"  # Swagger UI
+    environment:
+      - SWAGGER_JSON=/docs/auth-api.yaml
+      - BASE_URL=/swagger
+    volumes:
+      - ./backend/docs/auth-api.yaml:/docs/auth-api.yaml:ro
     restart: unless-stopped
     networks:
       - vibecode-full-stack-starter-kit_network

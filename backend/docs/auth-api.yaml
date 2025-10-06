@@ -1,0 +1,674 @@
+﻿openapi: 3.0.3
+info:
+  title: Laravel Authentication API
+  description: |
+    Complete authentication API built with Laravel Fortify and Sanctum.
+    
+    ## Features
+    - User Registration with email verification
+    - Login/Logout with Remember Me
+    - Password Reset
+    - Email Verification
+    - Token Refresh
+    - Rate Limiting
+    - Account Lockout
+    - Audit Logging
+    
+    ## Authentication
+    Protected endpoints require Bearer token in Authorization header:
+    ```
+    Authorization: Bearer {token}
+    ```
+    
+    ## Base URL
+    - Development: http://localhost:8201/api
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8201/api
+    description: Local development server
+
+tags:
+  - name: Health
+    description: Service health check
+  - name: Authentication
+    description: User authentication endpoints
+  - name: Password Reset
+    description: Password reset flow
+  - name: Email Verification
+    description: Email verification endpoints
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check API and service health (database, redis)
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Services are healthy
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+                format: uuid
+              description: Request trace ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                success: true
+                data:
+                  status: healthy
+                  services:
+                    database: connected
+                    redis: connected
+        '503':
+          description: One or more services degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                success: false
+                data:
+                  status: degraded
+                  services:
+                    database: connected
+                    redis: disconnected
+
+  /v1/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: |
+        Register a new user account.
+        
+        **Password Requirements:**
+        - Minimum 8 characters
+        - Mixed case (upper and lower)
+        - At least one number
+        - At least one symbol
+        - Not in breach databases
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registration successful
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login
+      description: |
+        Authenticate user and receive access token.
+        
+        **Rate Limiting:**
+        - 5 attempts per 15 minutes (by email)
+        - 20 attempts per 15 minutes (by IP)
+        
+        **Token TTL:**
+        - Standard: 1 hour
+        - Remember Me: 30 days
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            X-Request-ID:
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: Invalid credentials
+                error_code: AUTH_001
+        '403':
+          description: Account locked or email not verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: Too many login attempts. Please try again later.
+                error_code: AUTH_004
+
+  /v1/user:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      description: Get authenticated user information
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Email not verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout
+      description: |
+        Revoke current access token.
+        
+        **Note:** Always returns 200, even if token is invalid/expired/missing (idempotent).
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Logout successful
+
+  /v1/auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh token
+      description: |
+        Refresh access token (get new token, revoke old).
+        
+        **Rate Limiting:** 10 requests per hour (by user ID)
+      operationId: refreshToken
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+        '401':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/auth/forgot-password:
+    post:
+      tags:
+        - Password Reset
+      summary: Request password reset
+      description: |
+        Request password reset link via email.
+        
+        **Rate Limiting:** 10 requests per 15 minutes (by IP)
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+      responses:
+        '200':
+          description: Reset link sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Password reset link sent to your email.
+        '422':
+          description: Invalid email or email not verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/auth/reset-password:
+    post:
+      tags:
+        - Password Reset
+      summary: Reset password
+      description: |
+        Reset password using token from email.
+        
+        **Token Expiration:** 60 minutes (hard cutoff)
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Password has been reset successfully
+        '422':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: Invalid or expired token.
+                error_code: AUTH_006
+
+  /v1/auth/email/verify/{id}/{hash}:
+    get:
+      tags:
+        - Email Verification
+      summary: Verify email
+      description: |
+        Verify email address (normally clicked from email link).
+        
+        **Redirects to frontend:**
+        - Success: `{FRONTEND_URL}/email-verified?status=success`
+        - Already verified: `{FRONTEND_URL}/email-verified?status=already_verified`
+        - Error: `{FRONTEND_URL}/email-verified?status=error&code=AUTH_007`
+      operationId: verifyEmail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+        - name: hash
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Verification hash
+        - name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Signed URL signature
+        - name: expires
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Expiration timestamp
+      responses:
+        '302':
+          description: Redirect to frontend
+
+  /v1/auth/email/resend:
+    post:
+      tags:
+        - Email Verification
+      summary: Resend verification email
+      description: |
+        Resend email verification link.
+        
+        **Rate Limiting:** 10 requests per 15 minutes (by IP)
+      operationId: resendVerification
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Verification email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Verification email sent.
+        '400':
+          description: Email already verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Enter your bearer token in the format **Bearer &lt;token&gt;**
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [healthy, degraded]
+            services:
+              type: object
+              properties:
+                database:
+                  type: string
+                  enum: [connected, disconnected]
+                redis:
+                  type: string
+                  enum: [connected, disconnected]
+
+    RegisterRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - password_confirmation
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: Password123!
+          description: Min 8 chars, mixed case, numbers, symbols, uncompromised
+        password_confirmation:
+          type: string
+          format: password
+          example: Password123!
+
+    RegisterResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Registration successful. Please check your email for verification.
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: test@example.com
+        password:
+          type: string
+          format: password
+          example: Password123!
+        remember:
+          type: boolean
+          default: false
+          description: Use 30-day token instead of 1-hour
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Login successful
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+              example: 1|abc123...
+            expires_at:
+              type: string
+              format: date-time
+              example: '2025-10-06T15:30:00Z'
+
+    UserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/User'
+
+    RefreshResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Token refreshed successfully
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              example: 2|xyz789...
+            expires_at:
+              type: string
+              format: date-time
+              example: '2025-10-06T16:30:00Z'
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - email
+        - password
+        - password_confirmation
+      properties:
+        token:
+          type: string
+          example: abc123...
+          description: Token from password reset email
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: NewPassword123!
+        password_confirmation:
+          type: string
+          format: password
+          example: NewPassword123!
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        email_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2025-10-06T10:05:00Z'
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2025-10-06T10:30:00Z'
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-10-06T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-10-06T10:30:00Z'
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Error message
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            email:
+              - The email field is required.
+        error_code:
+          type: string
+          enum:
+            - AUTH_001
+            - AUTH_002
+            - AUTH_003
+            - AUTH_004
+            - AUTH_005
+            - AUTH_006
+            - AUTH_007
+            - AUTH_008
+          example: AUTH_001
+          description: |
+            Error codes:
+            - AUTH_001: Invalid credentials
+            - AUTH_002: Account locked
+            - AUTH_003: Email not verified
+            - AUTH_004: Rate limit exceeded
+            - AUTH_005: Invalid/expired token
+            - AUTH_006: Password reset token invalid
+            - AUTH_007: Email verification link invalid
+            - AUTH_008: Account deleted

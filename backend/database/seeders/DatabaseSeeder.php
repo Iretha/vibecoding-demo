@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,11 +14,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+        // Create verified user for testing
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'password' => bcrypt('Password123!'),
+            'email_verified_at' => now(),
+        ]);
+
+        // Create unverified user for testing verification flow
+        User::factory()->create([
+            'name' => 'Unverified User',
+            'email' => 'unverified@example.com',
+            'password' => bcrypt('Password123!'),
+            'email_verified_at' => null,
         ]);
     }
 }

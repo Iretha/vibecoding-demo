@@ -1,0 +1,286 @@
+{
+    "info": {
+      "name": "Laravel Auth API",
+      "description": "Complete authentication API with Laravel Fortify & Sanctum",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+      "version": "1.0.0",
+      "_postman_id": "12345678-1234-1234-1234-123456789012"
+    },
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:8201/api",
+        "type": "string"
+      },
+      {
+        "key": "token",
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "user_email",
+        "value": "test@example.com",
+        "type": "string"
+      },
+      {
+        "key": "user_password",
+        "value": "Password123!",
+        "type": "string"
+      }
+    ],
+    "item": [
+      {
+        "name": "Health Check",
+        "id": "health-check",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "{{base_url}}/health",
+            "host": ["{{base_url}}"],
+            "path": ["health"]
+          },
+          "description": "Check API and service health (database, redis)"
+        },
+        "response": []
+      },
+      {
+        "name": "Register",
+        "id": "register",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "if (pm.response.code === 201) {",
+                "    var jsonData = pm.response.json();",
+                "    pm.expect(jsonData.success).to.eql(true);",
+                "}"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"Password123!\",\n  \"password_confirmation\": \"Password123!\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/v1/auth/register",
+            "host": ["{{base_url}}"],
+            "path": ["v1", "auth", "register"]
+          },
+          "description": "Register a new user account"
+        },
+        "response": []
+      },
+      {
+        "name": "Login",
+        "id": "login",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "if (pm.response.code === 200) {",
+                "    var jsonData = pm.response.json();",
+                "    pm.collectionVariables.set('token', jsonData.data.token);",
+                "}"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\",\n  \"remember\": false\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/v1/auth/login",
+            "host": ["{{base_url}}"],
+            "path": ["v1", "auth", "login"]
+          },
+          "description": "Login and receive access token"
+        },
+        "response": []
+      },
+      {
+        "name": "Get Current User",
+        "id": "get-current-user",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}",
+              "type": "text"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/v1/user",
+            "host": ["{{base_url}}"],
+            "path": ["v1", "user"]
+          },
+          "description": "Get authenticated user information"
+        },
+        "response": []
+      },
+      {
+        "name": "Refresh Token",
+        "id": "refresh-token",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "if (pm.response.code === 200) {",
+                "    var jsonData = pm.response.json();",
+                "    pm.collectionVariables.set('token', jsonData.data.token);",
+                "}"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}",
+              "type": "text"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/v1/auth/refresh",
+            "host": ["{{base_url}}"],
+            "path": ["v1", "auth", "refresh"]
+          },
+          "description": "Refresh access token (get new token, revoke old)"
+        },
+        "response": []
+      },
+      {
+        "name": "Forgot Password",
+        "id": "forgot-password",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"email\": \"{{user_email}}\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/v1/auth/forgot-password",
+            "host": ["{{base_url}}"],
+            "path": ["v1", "auth", "forgot-password"]
+          },
+          "description": "Request password reset link via email"
+        },
+        "response": []
+      },
+      {
+        "name": "Reset Password",
+        "id": "reset-password",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"token\": \"PASTE_TOKEN_FROM_EMAIL\",\n  \"email\": \"{{user_email}}\",\n  \"password\": \"NewPassword123!\",\n  \"password_confirmation\": \"NewPassword123!\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/v1/auth/reset-password",
+            "host": ["{{base_url}}"],
+            "path": ["v1", "auth", "reset-password"]
+          },
+          "description": "Reset password using token from email"
+        },
+        "response": []
+      },
+      {
+        "name": "Resend Verification",
+        "id": "resend-verification",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}",
+              "type": "text"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/v1/auth/email/resend",
+            "host": ["{{base_url}}"],
+            "path": ["v1", "auth", "email", "resend"]
+          },
+          "description": "Resend email verification link"
+        },
+        "response": []
+      },
+      {
+        "name": "Logout",
+        "id": "logout",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{token}}",
+              "type": "text"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/v1/auth/logout",
+            "host": ["{{base_url}}"],
+            "path": ["v1", "auth", "logout"]
+          },
+          "description": "Logout (revoke current token) - Always returns 200"
+        },
+        "response": []
+      }
+    ],
+    "event": [
+      {
+        "listen": "prerequest",
+        "script": {
+          "type": "text/javascript",
+          "exec": []
+        }
+      },
+      {
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": []
+        }
+      }
+    ]
+  }
