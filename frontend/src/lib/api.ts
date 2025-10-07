@@ -68,11 +68,17 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
+
+  // Add authentication header if token exists
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
 
   const config: RequestInit = {
     ...options,
@@ -130,5 +136,97 @@ export async function loginUser(credentials: LoginRequest): Promise<ApiResponse<
 export async function checkApiHealth(): Promise<ApiResponse<{ status: string; services: Record<string, string> }>> {
   return apiRequest<{ status: string; services: Record<string, string> }>('/health', {
     method: 'GET',
+  });
+}
+
+// Job Roles API functions
+export interface Role {
+  role_id: number;
+  role_name: string;
+  user_count?: number;
+}
+
+export interface AddSingleRoleRequest {
+  role_name: string;
+}
+
+export interface AddRolesResponse {
+  added: Array<{
+    role_id: number;
+    role_name: string;
+  }>;
+  skipped: Array<{
+    role_id: number;
+    role_name: string;
+    reason: string;
+  }>;
+}
+
+export interface UserRoleItem {
+  role_id: number;
+  role_name: string;
+  display_order: number | null;
+  assigned_at: string;
+}
+
+export interface UserRolesResponse {
+  roles: UserRoleItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+// Get all available roles with search
+export async function getAvailableRoles(search?: string, limit: number = 50): Promise<ApiResponse<{ roles: Role[]; total: number }>> {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  params.append('limit', limit.toString());
+  
+  return apiRequest<{ roles: Role[]; total: number }>(`/v1/roles?${params.toString()}`, {
+    method: 'GET',
+  });
+}
+
+// Add single role to user
+export async function addUserRole(userId: number, roleName: string): Promise<ApiResponse<AddRolesResponse>> {
+  return apiRequest<AddRolesResponse>(`/v1/users/${userId}/job-roles/single`, {
+    method: 'POST',
+    body: JSON.stringify({ role_name: roleName }),
+  });
+}
+
+// Get user's roles
+export async function getUserRoles(userId: number, page: number = 1, limit: number = 20): Promise<ApiResponse<UserRolesResponse>> {
+  return apiRequest<UserRolesResponse>(`/v1/users/${userId}/job-roles?page=${page}&limit=${limit}`, {
+    method: 'GET',
+  });
+}
+
+// Remove role from user
+export async function removeUserRole(userId: number, roleId: number): Promise<ApiResponse<null>> {
+  return apiRequest<null>(`/v1/users/${userId}/job-roles/${roleId}`, {
+    method: 'DELETE',
+  });
+}
+
+// Reorder user's roles
+export interface RoleOrderItem {
+  role_id: number;
+  display_order: number;
+}
+
+export interface ReorderRolesRequest {
+  role_orders: RoleOrderItem[];
+}
+
+export interface ReorderRolesResponse {
+  success: boolean;
+  message: string;
+}
+
+export async function reorderUserRoles(userId: number, roleOrders: RoleOrderItem[]): Promise<ApiResponse<ReorderRolesResponse>> {
+  return apiRequest<ReorderRolesResponse>(`/v1/users/${userId}/job-roles/reorder`, {
+    method: 'PUT',
+    body: JSON.stringify({ role_orders: roleOrders }),
   });
 }
