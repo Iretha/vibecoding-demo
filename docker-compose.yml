@@ -24,6 +24,7 @@ services:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:8201/api
       - WATCHPACK_POLLING=true
+      - PORT=3000     # Next.js listens on port 3000 inside container
     restart: unless-stopped
     networks:
       - vibecode-full-stack-starter-kit_network
