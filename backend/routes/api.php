@@ -268,6 +268,8 @@ Route::prefix('v1')->middleware(['auth:sanctum', CheckAccountLocked::class, Ensu
         Route::post('/job-roles', [UserRolesController::class, 'addRoles']);
         Route::post('/job-roles/single', [UserRolesController::class, 'addSingleRole']);
         Route::get('/job-roles', [UserRolesController::class, 'getUserRoles']);
+        Route::put('/job-roles/reorder', [UserRolesController::class, 'reorderRoles']);
+        Route::put('/job-roles/{roleId}/order', [UserRolesController::class, 'setRoleOrder']);
         Route::delete('/job-roles/{roleId}', [UserRolesController::class, 'removeRole']);
     });
     

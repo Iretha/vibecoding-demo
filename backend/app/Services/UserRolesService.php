@@ -77,12 +77,16 @@ class UserRolesService
     }
 
     /**
-     * Get user's roles with pagination.
+     * Get user's roles with pagination and custom ordering.
      */
     public function getUserRoles(User $user, int $page = 1, int $limit = 20, string $sort = 'role_name'): array
     {
+        // Use custom ordering: display_order first, then role_name
         $query = $user->roles()
-            ->orderBy($sort);
+            ->select('roles.*', 'user_roles.display_order', 'user_roles.created_at as pivot_created_at')
+            ->orderByRaw('CASE WHEN user_roles.display_order IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('user_roles.display_order', 'ASC')
+            ->orderBy('roles.role_name', 'ASC');
 
         $total = $query->count();
         $roles = $query->offset(($page - 1) * $limit)
@@ -92,7 +96,8 @@ class UserRolesService
                 return [
                     'role_id' => $role->id,
                     'role_name' => $role->role_name,
-                    'assigned_at' => $role->pivot->created_at->toIso8601String(),
+                    'display_order' => $role->display_order,
+                    'assigned_at' => $role->pivot_created_at ? \Carbon\Carbon::parse($role->pivot_created_at)->toIso8601String() : null,
                 ];
             });
 
@@ -123,6 +128,67 @@ class UserRolesService
 
         // Note: Audit logging is handled in the controller
 
+        return true;
+    }
+
+    /**
+     * Reorder user's roles.
+     */
+    public function reorderUserRoles(User $user, array $roleOrders, ?Request $request = null): array
+    {
+        // Validate that all role_ids belong to the user
+        $userRoleIds = $user->roles()->pluck('roles.id')->toArray();
+        $requestedRoleIds = array_column($roleOrders, 'role_id');
+        
+        $invalidRoleIds = array_diff($requestedRoleIds, $userRoleIds);
+        if (!empty($invalidRoleIds)) {
+            throw new \InvalidArgumentException('Some roles do not belong to this user: ' . implode(', ', $invalidRoleIds));
+        }
+
+        // Validate display_order values
+        foreach ($roleOrders as $roleOrder) {
+            if (!isset($roleOrder['role_id']) || !isset($roleOrder['display_order'])) {
+                throw new \InvalidArgumentException('Each role order must have role_id and display_order');
+            }
+            if (!is_int($roleOrder['display_order']) || $roleOrder['display_order'] < 1) {
+                throw new \InvalidArgumentException('display_order must be a positive integer');
+            }
+        }
+
+        $updatedCount = 0;
+        DB::transaction(function () use ($user, $roleOrders, &$updatedCount) {
+            foreach ($roleOrders as $roleOrder) {
+                UserRole::where('user_id', $user->id)
+                    ->where('role_id', $roleOrder['role_id'])
+                    ->update(['display_order' => $roleOrder['display_order']]);
+                $updatedCount++;
+            }
+        });
+
+        return [
+            'updated_count' => $updatedCount,
+        ];
+    }
+
+    /**
+     * Set display order for a single role.
+     */
+    public function setRoleOrder(User $user, int $roleId, int $displayOrder, ?Request $request = null): bool
+    {
+        // Validate that the role belongs to the user
+        $userRole = UserRole::where('user_id', $user->id)
+            ->where('role_id', $roleId)
+            ->first();
+
+        if (!$userRole) {
+            throw new \InvalidArgumentException('Role does not belong to this user');
+        }
+
+        if ($displayOrder < 1) {
+            throw new \InvalidArgumentException('display_order must be a positive integer');
+        }
+
+        $userRole->update(['display_order' => $displayOrder]);
         return true;
     }
 

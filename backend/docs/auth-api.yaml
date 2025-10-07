@@ -640,6 +640,118 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - Job Roles
+      summary: Set display order for a single role
+      description: |
+        Set the display order for a specific role in a user's profile.
+        
+        **Protected endpoint** - Requires authentication.
+      operationId: setRoleOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Role ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetRoleOrderRequest'
+      responses:
+        '200':
+          description: Role order updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Unauthorized to manage roles for this user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Role not found for this user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/users/{userId}/job-roles/reorder:
+    put:
+      tags:
+        - Job Roles
+      summary: Reorder user's roles
+      description: |
+        Reorder multiple roles for a user by setting their display_order values.
+        
+        **Protected endpoint** - Requires authentication.
+      operationId: reorderUserRoles
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReorderRolesRequest'
+      responses:
+        '200':
+          description: Roles reordered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReorderRolesResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Unauthorized to manage roles for this user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /v1/roles:
     get:
@@ -1124,6 +1236,11 @@ components:
         role_name:
           type: string
           example: "Software Engineer"
+        display_order:
+          type: integer
+          nullable: true
+          description: Custom display order for this role (null if not set)
+          example: 2
         assigned_at:
           type: string
           format: date-time
@@ -1243,3 +1360,59 @@ components:
           type: string
           format: date-time
           example: "2025-01-15T10:30:00Z"
+
+    SetRoleOrderRequest:
+      type: object
+      required:
+        - display_order
+      properties:
+        display_order:
+          type: integer
+          minimum: 1
+          description: The display order for this role (1-based)
+          example: 2
+
+    ReorderRolesRequest:
+      type: object
+      required:
+        - role_orders
+      properties:
+        role_orders:
+          type: array
+          minItems: 1
+          description: Array of role orders to set
+          items:
+            $ref: '#/components/schemas/RoleOrderItem'
+
+    RoleOrderItem:
+      type: object
+      required:
+        - role_id
+        - display_order
+      properties:
+        role_id:
+          type: integer
+          description: The ID of the role
+          example: 1
+        display_order:
+          type: integer
+          minimum: 1
+          description: The display order for this role (1-based)
+          example: 2
+
+    ReorderRolesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Roles reordered successfully"
+        data:
+          type: object
+          properties:
+            updated_count:
+              type: integer
+              description: Number of roles that were updated
+              example: 3

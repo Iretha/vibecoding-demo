@@ -141,7 +141,7 @@ export default function Home() {
                     href="/my-job-roles"
                     className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-6 py-3 rounded-md font-medium transition-colors duration-200"
                   >
-                    Edit My Job Roles
+                    Edit My Roles
                   </a>
                 </div>
               </div>

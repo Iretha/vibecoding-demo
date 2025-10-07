@@ -15,6 +15,7 @@ class UserRole extends Model
     protected $fillable = [
         'user_id',
         'role_id',
+        'display_order',
     ];
 
     protected function casts(): array
