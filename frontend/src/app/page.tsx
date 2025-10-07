@@ -138,10 +138,10 @@ export default function Home() {
                     Go to Dashboard
                   </a>
                   <a
-                    href="/profile"
+                    href="/my-job-roles"
                     className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-6 py-3 rounded-md font-medium transition-colors duration-200"
                   >
-                    View Profile
+                    Edit My Job Roles
                   </a>
                 </div>
               </div>
