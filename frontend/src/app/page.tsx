@@ -1,18 +1,40 @@
-import { Metadata } from 'next';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 
-export const metadata: Metadata = {
-  title: 'Home - VibeCode Full Stack Starter Kit',
-  description: 'Welcome to VibeCode - A modern full-stack application with authentication, user management, and more.',
-  keywords: ['home', 'dashboard', 'full-stack', 'authentication', 'starter kit'],
-  openGraph: {
-    title: 'Home - VibeCode Full Stack Starter Kit',
-    description: 'Welcome to VibeCode - A modern full-stack application.',
-    type: 'website',
-  },
-};
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  email_verified_at: string | null;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function Home() {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem('auth_token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        // Clear invalid data
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+      }
+    }
+    
+    setIsLoading(false);
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
@@ -71,30 +93,61 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-16">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                Get Started
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Ready to build something amazing? Start by creating an account or signing in to access all features.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a
-                  href="/register"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition-colors duration-200"
-                >
-                  Create Account
-                </a>
-                <a
-                  href="/login"
-                  className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-6 py-3 rounded-md font-medium transition-colors duration-200"
-                >
-                  Sign In
-                </a>
+          {/* Get Started section - Only show when user is not logged in */}
+          {!user && !isLoading && (
+            <div className="mt-16">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  Get Started
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Ready to build something amazing? Start by creating an account or signing in to access all features.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <a
+                    href="/register"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition-colors duration-200"
+                  >
+                    Create Account
+                  </a>
+                  <a
+                    href="/login"
+                    className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-6 py-3 rounded-md font-medium transition-colors duration-200"
+                  >
+                    Sign In
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Welcome message for logged in users */}
+          {user && !isLoading && (
+            <div className="mt-16">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  Welcome back, {user.name}!
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  You&apos;re all set up and ready to go. Explore your dashboard or update your profile to get started.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <a
+                    href="/dashboard"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium transition-colors duration-200"
+                  >
+                    Go to Dashboard
+                  </a>
+                  <a
+                    href="/profile"
+                    className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-6 py-3 rounded-md font-medium transition-colors duration-200"
+                  >
+                    View Profile
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

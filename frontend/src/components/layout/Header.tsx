@@ -61,27 +61,29 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            <Link 
-              href="/" 
-              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              Home
-            </Link>
-            <Link 
-              href="/dashboard" 
-              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              Dashboard
-            </Link>
-            <Link 
-              href="/profile" 
-              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              Profile
-            </Link>
-          </nav>
+          {/* Navigation - Only show when user is logged in */}
+          {user && (
+            <nav className="hidden md:flex space-x-8">
+              <Link 
+                href="/" 
+                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+              >
+                Home
+              </Link>
+              <Link 
+                href="/dashboard" 
+                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+              >
+                Dashboard
+              </Link>
+              <Link 
+                href="/profile" 
+                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+              >
+                Profile
+              </Link>
+            </nav>
+          )}
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
