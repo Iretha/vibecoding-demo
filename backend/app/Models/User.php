@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -45,6 +46,31 @@ class User extends Authenticatable implements MustVerifyEmail
     public function auditLogs(): HasMany
     {
         return $this->hasMany(AuditLog::class);
+    }
+
+    /**
+     * Get the roles that belong to the user.
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'user_roles')
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if user has a specific role.
+     */
+    public function hasRole(string $roleName): bool
+    {
+        return $this->roles()->where('role_name', $roleName)->exists();
+    }
+
+    /**
+     * Get role names as array.
+     */
+    public function getRoleNames(): array
+    {
+        return $this->roles()->pluck('role_name')->toArray();
     }
 
     public function isLocked(): bool

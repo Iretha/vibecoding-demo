@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\RolesController;
+use App\Http\Controllers\UserRolesController;
 use App\Http\Middleware\CheckAccountLocked;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use App\Models\User;
@@ -250,5 +252,29 @@ Route::get('/v1/user', function (Request $request) {
         'data' => $request->user(),
     ], 200)->header('X-Request-ID', (string) Str::uuid());
 })->middleware(['auth:sanctum', CheckAccountLocked::class, EnsureEmailIsVerified::class]);
+
+// Public Job Roles Routes (no authentication required)
+Route::prefix('v1/roles')->group(function () {
+    Route::get('/', [RolesController::class, 'index']);
+    Route::get('/popular', [RolesController::class, 'popular']);
+    Route::get('/{roleId}', [RolesController::class, 'show']);
+});
+
+// Protected Job Roles Management Routes
+Route::prefix('v1')->middleware(['auth:sanctum', CheckAccountLocked::class, EnsureEmailIsVerified::class])->group(function () {
+    
+    // User Roles Management
+    Route::prefix('users/{userId}')->group(function () {
+        Route::post('/job-roles', [UserRolesController::class, 'addRoles']);
+        Route::post('/job-roles/single', [UserRolesController::class, 'addSingleRole']);
+        Route::get('/job-roles', [UserRolesController::class, 'getUserRoles']);
+        Route::delete('/job-roles/{roleId}', [UserRolesController::class, 'removeRole']);
+    });
+    
+    // Protected Roles Management
+    Route::prefix('roles')->group(function () {
+        Route::get('/{roleId}/users', [RolesController::class, 'users']);
+    });
+});
 
 

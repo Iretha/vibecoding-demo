@@ -1,8 +1,8 @@
 ﻿openapi: 3.0.3
 info:
-  title: Laravel Authentication API
+  title: AI Vibes API
   description: |
-    Complete authentication API built with Laravel Fortify and Sanctum.
+    Complete AI Vibes API built with Laravel Fortify and Sanctum.
     
     ## Features
     - User Registration with email verification
@@ -13,12 +13,22 @@ info:
     - Rate Limiting
     - Account Lockout
     - Audit Logging
+    - Job Roles Management
     
     ## Authentication
     Protected endpoints require Bearer token in Authorization header:
     ```
     Authorization: Bearer {token}
     ```
+    
+    ## Job Roles Management
+    The API includes comprehensive job roles management functionality:
+    - Add multiple or single roles to users
+    - Remove roles from users
+    - List user's roles with pagination
+    - Search and discover available roles
+    - Get popular roles and role statistics
+    - Users can only manage their own roles
     
     ## Base URL
     - Development: http://localhost:8201/api
@@ -40,6 +50,8 @@ tags:
     description: Password reset flow
   - name: Email Verification
     description: Email verification endpoints
+  - name: Job Roles
+    description: User job roles management
 
 paths:
   /health:
@@ -432,6 +444,340 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /v1/users/{userId}/job-roles:
+    post:
+      tags:
+        - Job Roles
+      summary: Add multiple job roles to user
+      description: |
+        Add multiple job roles to a user's profile. Roles are automatically created if they don't exist.
+        
+        **Business Rules:**
+        - Users can only manage their own roles
+        - Maximum 20 roles per user
+        - Role names are normalized (title case)
+        - Duplicate roles are skipped gracefully
+      operationId: addUserRoles
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRolesRequest'
+      responses:
+        '201':
+          description: Roles processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddRolesResponse'
+        '400':
+          description: Validation error or business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Unauthorized to manage roles for this user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Job Roles
+      summary: Get user's job roles
+      description: |
+        Retrieve all job roles assigned to a user with pagination and sorting.
+      operationId: getUserRoles
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of results per page
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [role_name, assigned_at]
+            default: role_name
+          description: Sort field
+      responses:
+        '200':
+          description: User roles retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRolesResponse'
+        '403':
+          description: Unauthorized to view roles for this user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/users/{userId}/job-roles/single:
+    post:
+      tags:
+        - Job Roles
+      summary: Add single job role to user
+      description: |
+        Add a single job role to a user's profile. Role is automatically created if it doesn't exist.
+      operationId: addSingleUserRole
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSingleRoleRequest'
+      responses:
+        '201':
+          description: Role processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddRolesResponse'
+        '400':
+          description: Validation error or business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Unauthorized to manage roles for this user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/users/{userId}/job-roles/{roleId}:
+    delete:
+      tags:
+        - Job Roles
+      summary: Remove job role from user
+      description: |
+        Remove a specific job role from a user's profile.
+        
+        **Note:** This only removes the user-role association, not the role itself.
+      operationId: removeUserRole
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Role ID
+      responses:
+        '204':
+          description: Role removed successfully
+        '403':
+          description: Unauthorized to manage roles for this user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Role not found for this user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/roles:
+    get:
+      tags:
+        - Job Roles
+      summary: Get all available roles
+      description: |
+        Retrieve all available job roles in the system with optional search and pagination.
+        
+        **Public endpoint** - No authentication required.
+      operationId: getAllRoles
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+          description: Search term to filter roles by name
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of results
+      responses:
+        '200':
+          description: Roles retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolesListResponse'
+
+  /v1/roles/popular:
+    get:
+      tags:
+        - Job Roles
+      summary: Get popular roles
+      description: |
+        Retrieve the most popular job roles (most used by users).
+        
+        **Public endpoint** - No authentication required.
+      operationId: getPopularRoles
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: Number of results
+      responses:
+        '200':
+          description: Popular roles retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PopularRolesResponse'
+
+  /v1/roles/{roleId}:
+    get:
+      tags:
+        - Job Roles
+      summary: Get specific role details
+      description: |
+        Retrieve details for a specific role including user count.
+        
+        **Public endpoint** - No authentication required.
+      operationId: getRoleById
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Role ID
+      responses:
+        '200':
+          description: Role details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleDetailResponse'
+        '404':
+          description: Role not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/roles/{roleId}/users:
+    get:
+      tags:
+        - Job Roles
+      summary: Get users with specific role
+      description: |
+        Retrieve all users who have a specific role with pagination.
+      operationId: getUsersWithRole
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Role ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of results per page
+      responses:
+        '200':
+          description: Users with role retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersWithRoleResponse'
+        '404':
+          description: Role not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -672,3 +1018,228 @@ components:
             - AUTH_006: Password reset token invalid
             - AUTH_007: Email verification link invalid
             - AUTH_008: Account deleted
+            - ROLES_001: Unauthorized to manage roles
+            - ROLES_002: Validation failed
+            - ROLES_003: Business rule violation
+            - ROLES_004: Internal server error
+            - ROLES_005: Role not found
+
+    AddRolesRequest:
+      type: object
+      required:
+        - roles
+      properties:
+        roles:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 100
+          example: ["Software Engineer", "Product Manager", "Data Analyst"]
+
+    AddSingleRoleRequest:
+      type: object
+      required:
+        - role_name
+      properties:
+        role_name:
+          type: string
+          maxLength: 100
+          example: "Software Engineer"
+
+    AddRolesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Roles processed successfully"
+        data:
+          type: object
+          properties:
+            added:
+              type: array
+              items:
+                $ref: '#/components/schemas/RoleItem'
+            skipped:
+              type: array
+              items:
+                $ref: '#/components/schemas/SkippedRoleItem'
+
+    RoleItem:
+      type: object
+      properties:
+        role_id:
+          type: integer
+          example: 1
+        role_name:
+          type: string
+          example: "Software Engineer"
+
+    SkippedRoleItem:
+      type: object
+      properties:
+        role_id:
+          type: integer
+          example: 2
+        role_name:
+          type: string
+          example: "Product Manager"
+        reason:
+          type: string
+          example: "User already has this role"
+
+    UserRolesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            roles:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserRoleItem'
+            total:
+              type: integer
+              example: 2
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+
+    UserRoleItem:
+      type: object
+      properties:
+        role_id:
+          type: integer
+          example: 1
+        role_name:
+          type: string
+          example: "Software Engineer"
+        assigned_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+
+    RolesListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            roles:
+              type: array
+              items:
+                $ref: '#/components/schemas/RoleWithCount'
+            total:
+              type: integer
+              example: 250
+
+    RoleWithCount:
+      type: object
+      properties:
+        role_id:
+          type: integer
+          example: 1
+        role_name:
+          type: string
+          example: "Software Engineer"
+        user_count:
+          type: integer
+          example: 150
+
+    PopularRolesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            roles:
+              type: array
+              items:
+                $ref: '#/components/schemas/RoleWithCount'
+            total:
+              type: integer
+              example: 10
+
+    RoleDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            role_id:
+              type: integer
+              example: 1
+            role_name:
+              type: string
+              example: "Software Engineer"
+            user_count:
+              type: integer
+              example: 150
+            created_at:
+              type: string
+              format: date-time
+              example: "2025-01-15T10:30:00Z"
+            updated_at:
+              type: string
+              format: date-time
+              example: "2025-01-15T10:30:00Z"
+
+    UsersWithRoleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            users:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserWithRole'
+            total:
+              type: integer
+              example: 150
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+
+    UserWithRole:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        assigned_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
