@@ -42,11 +42,10 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Welcome to VibeCode
+            Welcome to AI Vibes
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-3xl mx-auto">
-            A modern full-stack application built with Next.js, Laravel, and Tailwind CSS. 
-            Featuring authentication, user management, and a clean, responsive design.
+          Discover the best AI tools — rated by people who do your job.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
