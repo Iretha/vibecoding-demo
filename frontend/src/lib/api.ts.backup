@@ -1,4 +1,4 @@
-﻿// API client for Laravel backend integration
+// API client for Laravel backend integration
 const API_BASE_URL = 'http://localhost:8201/api';
 
 // Types for API requests and responses
@@ -90,16 +90,6 @@ async function apiRequest<T>(
 
   try {
     const response = await fetch(url, config);
-
-    // Handle 204 No Content responses (like DELETE operations)
-    if (response.status === 204) {
-      return {
-        success: true,
-        message: 'Operation completed successfully',
-      };
-    }
-    
-    // For other responses, try to parse JSON
     const data = await response.json();
 
     if (!response.ok) {
@@ -117,9 +107,8 @@ async function apiRequest<T>(
       data: data.data,
       message: data.message,
     };
-  } catch (error) {
+  } catch {
     // Handle network errors
-    console.error('API Request Error:', error);
     return {
       success: false,
       message: 'Network error. Please check your connection and try again.',
