@@ -9,6 +9,12 @@ export interface RegisterRequest {
   password_confirmation: string;
 }
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+  remember?: boolean;
+}
+
 export interface User {
   id: number;
   name: string;
@@ -24,6 +30,16 @@ export interface RegisterResponse {
   message: string;
   data: {
     user: User;
+  };
+}
+
+export interface LoginResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: User;
+    token: string;
+    expires_at: string;
   };
 }
 
@@ -99,6 +115,14 @@ export async function registerUser(userData: RegisterRequest): Promise<ApiRespon
   return apiRequest<{ user: User }>('/v1/auth/register', {
     method: 'POST',
     body: JSON.stringify(userData),
+  });
+}
+
+// Login API function
+export async function loginUser(credentials: LoginRequest): Promise<ApiResponse<{ user: User; token: string; expires_at: string }>> {
+  return apiRequest<{ user: User; token: string; expires_at: string }>('/v1/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
   });
 }
 

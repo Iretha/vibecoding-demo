@@ -132,3 +132,4 @@ Edit `backend/docs/auth-api.yaml` to:
 3. Test the authentication flow
 4. Explore all available endpoints
 5. Use the generated code snippets in your frontend
+
