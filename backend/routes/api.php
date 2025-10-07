@@ -7,7 +7,9 @@ use App\Http\Middleware\EnsureEmailIsVerified;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Redis;
@@ -48,9 +50,31 @@ Route::get('/health', function () {
 
 // Auth routes under /api/v1/auth prefix
 Route::prefix('v1/auth')->group(function () {
-// Registration
-Route::post('/register', [\Laravel\Fortify\Http\Controllers\RegisteredUserController::class, 'store'])
-    ->middleware(['throttle:forgot-password']);
+// Registration - custom implementation to avoid CSRF issues
+Route::post('/register', function (Request $request) {
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:8|confirmed',
+    ]);
+
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+    ]);
+
+    // Send email verification
+    $user->sendEmailVerificationNotification();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Registration successful. Please check your email for verification.',
+        'data' => [
+            'user' => $user,
+        ],
+    ], 201)->header('X-Request-ID', (string) Str::uuid());
+})->middleware(['throttle:forgot-password']);
 
 // Login
 Route::post('/login', function (Request $request) {

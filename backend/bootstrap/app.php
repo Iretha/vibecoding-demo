@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         ]);
 
-        $middleware->statefulApi();
+        // $middleware->statefulApi(); // Disabled - using stateless authentication
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
