@@ -67,6 +67,8 @@ export default function MyJobRolesPage() {
           name: role.role_name,
           order: role.display_order || 0,
         }));
+        convertedRoles.sort((a, b) => a.order - b.order);
+        console.log('Converted roles:', convertedRoles);
         setRoles(convertedRoles);
       }
     } catch (error) {
@@ -192,7 +194,7 @@ export default function MyJobRolesPage() {
               My Roles
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              First five roles will appear on you dashboard to see what&apos;s trending there.
+              List your roles the get AI tool recommendations
             </p>
           </div>
 
@@ -231,7 +233,7 @@ export default function MyJobRolesPage() {
               My Roles
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              First five roles will appear on you dashboard to see what&apos;s trending there.
+            List your roles the get AI tool recommendations
             </p>
           </div>
 
@@ -276,7 +278,7 @@ export default function MyJobRolesPage() {
             My Roles
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            First five roles will appear on you dashboard to see what&apos;s trending there.
+          List your roles the get AI tool recommendations
           </p>
         </div>
 

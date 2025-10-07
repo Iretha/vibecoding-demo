@@ -81,12 +81,24 @@ class UserRolesService
      */
     public function getUserRoles(User $user, int $page = 1, int $limit = 20, string $sort = 'role_name'): array
     {
-        // Use custom ordering: display_order first, then role_name
         $query = $user->roles()
-            ->select('roles.*', 'user_roles.display_order', 'user_roles.created_at as pivot_created_at')
-            ->orderByRaw('CASE WHEN user_roles.display_order IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('user_roles.display_order', 'ASC')
-            ->orderBy('roles.role_name', 'ASC');
+            ->select('roles.*', 'user_roles.display_order', 'user_roles.created_at as pivot_created_at');
+
+        // Apply sorting based on the sort parameter
+        switch ($sort) {
+            case 'display_order':
+                $query->orderByRaw('CASE WHEN user_roles.display_order IS NULL THEN 1 ELSE 0 END')
+                      ->orderBy('user_roles.display_order', 'ASC')
+                      ->orderBy('roles.role_name', 'ASC');
+                break;
+            case 'assigned_at':
+                $query->orderBy('user_roles.created_at', 'ASC');
+                break;
+            case 'role_name':
+            default:
+                $query->orderBy('roles.role_name', 'ASC');
+                break;
+        }
 
         $total = $query->count();
         $roles = $query->offset(($page - 1) * $limit)

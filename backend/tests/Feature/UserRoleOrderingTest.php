@@ -67,7 +67,7 @@ class UserRoleOrderingTest extends TestCase
         $getResponse = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
             'Accept' => 'application/json',
-        ])->getJson("/api/v1/users/{$this->user->id}/job-roles");
+        ])->getJson("/api/v1/users/{$this->user->id}/job-roles?sort=display_order");
 
         $getResponse->assertStatus(200);
         $roles = $getResponse->json('data.roles');
@@ -124,11 +124,11 @@ class UserRoleOrderingTest extends TestCase
             ->where('role_id', $role1->id)
             ->update(['display_order' => 2]);
 
-        // Get user roles and verify ordering
+        // Get user roles with display_order sorting and verify ordering
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
             'Accept' => 'application/json',
-        ])->getJson("/api/v1/users/{$this->user->id}/job-roles");
+        ])->getJson("/api/v1/users/{$this->user->id}/job-roles?sort=display_order");
 
         $response->assertStatus(200);
         $roles = $response->json('data.roles');

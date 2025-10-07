@@ -534,8 +534,8 @@ paths:
           in: query
           schema:
             type: string
-            enum: [role_name, assigned_at]
-            default: role_name
+            enum: [display_order, role_name, assigned_at]
+            default: display_order
           description: Sort field
       responses:
         '200':

@@ -163,7 +163,7 @@ class UserRolesController extends Controller
             $request->validate([
                 'page' => 'integer|min:1',
                 'limit' => 'integer|min:1|max:100',
-                'sort' => 'string|in:role_name,assigned_at',
+                'sort' => 'string|in:role_name,assigned_at,display_order',
             ]);
 
             $user = User::findOrFail($userId);
