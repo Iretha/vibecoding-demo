@@ -1,8 +1,8 @@
 ﻿openapi: 3.0.3
 info:
-  title: AI Vibes API
+  title: RoleStack AI API
   description: |
-    Complete AI Vibes API built with Laravel Fortify and Sanctum.
+    Complete RoleStack AI API built with Laravel Fortify and Sanctum.
     
     ## Features
     - User Registration with email verification

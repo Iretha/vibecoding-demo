@@ -194,7 +194,7 @@ export default function MyJobRolesPage() {
               My Roles
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              List your roles the get AI tool recommendations
+              List your roles to get AI tool recommendations.
             </p>
           </div>
 
@@ -233,7 +233,7 @@ export default function MyJobRolesPage() {
               My Roles
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-            List your roles the get AI tool recommendations
+            List your roles to get AI tool recommendations.
             </p>
           </div>
 
@@ -278,7 +278,7 @@ export default function MyJobRolesPage() {
             My Roles
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-          List your roles the get AI tool recommendations
+          List your roles to get AI tool recommendations.
           </p>
         </div>
 

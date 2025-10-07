@@ -121,7 +121,7 @@ export default function RoleList({ roles, onDeleteRole, onReorderRoles, onAddRol
               Drag to reorder
             </h4>
             <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-              Use the drag handle (⋮⋮) to reorder your roles. The order affects your personalized recommendations.
+              Use the drag handle (⋮⋮) to reorder your roles.
             </p>
           </div>
         </div>

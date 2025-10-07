@@ -56,7 +56,7 @@ export default function Header() {
                 </svg>
               </div>
               <span className="text-xl font-bold text-gray-900 dark:text-white">
-              AI Vibes
+              RoleStack AI
               </span>
             </Link>
           </div>

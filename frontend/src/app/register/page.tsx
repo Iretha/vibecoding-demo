@@ -18,7 +18,7 @@ export default function RegisterPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Welcome to AI Vibes
+            Welcome to RoleStack AI
           </h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           Discover the best AI tools — rated by people who do your job.
